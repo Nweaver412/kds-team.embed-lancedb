@@ -2,4 +2,7 @@ FROM quay.io/keboola/docker-custom-python:latest
 
 COPY . /code/
 WORKDIR /data/
-CMD ["python", "-u", "/code/main.py"]
+
+RUN pip install -r /code/requirements.txt
+
+CMD ["python", "-u", "/code/src/component.py"]

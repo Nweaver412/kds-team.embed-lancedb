@@ -1,0 +1,1 @@
+https://github.com/Nweaver412/kds-team.embed-lancedb/blob/master/LICENSE.md

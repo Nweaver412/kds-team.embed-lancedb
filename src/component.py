@@ -1,14 +1,18 @@
-print("Running...")
-# import os
-# import zipfile
-# import pandas as pd
-# import lancedb
-# from lancedb.pydantic import LanceModel, Vector
-# from openai import OpenAI
-# from keboola.component.base import ComponentBase
-# from keboola.component.exceptions import UserException
+print("Running... Component")
+import os
+import zipfile
+import lancedb
+import csv
 
-# from configuration import Configuration
+import pandas as pd
+
+from lancedb.pydantic import LanceModel, Vector
+from openai import OpenAI
+from keboola.component.base import ComponentBase
+from keboola.component.exceptions import UserException
+
+from configuration import Configuration
+
 
 # MODEL_MAPPING = {
 #     "small_03": "text-embedding-3-small",

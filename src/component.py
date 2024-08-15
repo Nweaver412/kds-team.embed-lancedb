@@ -1,8 +1,10 @@
 print("Running... Component")
+
 import os
 import zipfile
 import lancedb
 import csv
+import json
 
 import pandas as pd
 
@@ -13,6 +15,25 @@ from keboola.component.exceptions import UserException
 
 from configuration import Configuration
 
+with open('/component_config/configSchema.json', 'r', encoding='utf-8') as config_file:
+    config = json.load(config_file)
+    embed_column = config.get('embedColumn')
+
+csvlt = '\n'
+csvdel = ','
+csvquo = '"'
+
+with open('/data/in/tables/processed.csv', mode='rt', encoding='utf-8') as in_file:
+    lazy_lines = (line.replace('\0', '') for line in in_file)
+    reader = csv.DictReader(lazy_lines, lineterminator=csvlt, delimiter=csvdel, quotechar=csvquo)
+
+    for row in reader:
+        if embed_column in row:
+            text_to_embed = row[embed_column]
+            print(f"Text to embed from '{embed_column}' column: {text_to_embed}")
+        else:
+            print(f"Column '{embed_column}' not found in the CSV file.")
+        exit()
 
 # MODEL_MAPPING = {
 #     "small_03": "text-embedding-3-small",

@@ -15,7 +15,7 @@ from keboola.component.exceptions import UserException
 
 from configuration import Configuration
 
-with open('/component_config/configSchema.json', 'r', encoding='utf-8') as config_file:
+with open('../component_config/configSchema.json', 'r', encoding='utf-8') as config_file:
     config = json.load(config_file)
     embed_column = config.get('embedColumn')
 
@@ -23,7 +23,7 @@ csvlt = '\n'
 csvdel = ','
 csvquo = '"'
 
-with open('/data/in/tables/processed.csv', mode='rt', encoding='utf-8') as in_file:
+with open('../data/in/tables/processed.csv', mode='rt', encoding='utf-8') as in_file:
     lazy_lines = (line.replace('\0', '') for line in in_file)
     reader = csv.DictReader(lazy_lines, lineterminator=csvlt, delimiter=csvdel, quotechar=csvquo)
 

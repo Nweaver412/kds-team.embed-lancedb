@@ -30,7 +30,7 @@ with open('/data/in/tables/processed.csv', mode='rt', encoding='utf-8') as in_fi
     for row in reader:
         if embed_column in row:
             text_to_embed = row[embed_column]
-            print(f"Text to embed from '{embed_column}' column: {text_to_embed}")
+            print(f"Text to embed from '{embed_column}' column:")
         else:
             print(f"Column '{embed_column}' not found in the CSV file.")
         exit()

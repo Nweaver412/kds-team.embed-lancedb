@@ -32,6 +32,15 @@ class ConfigurationBase:
 
 @dataclass
 class Configuration(ConfigurationBase):
-    embed_column: str
-    pswd_api_key: str
+    embedColumn: str
+    pswd_apiKey: str
     model: str
+
+    def __post_init__(self):
+        # Map the enum values to their corresponding model names
+        model_mapping = {
+            "small_03": "text-embedding-3-small",
+            "large_03": "text-embedding-3-large",
+            "ada_002": "text-embedding-ada-002"
+        }
+        self.model = model_mapping.get(self.model, self.model)

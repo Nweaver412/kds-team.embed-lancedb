@@ -1,179 +1,46 @@
-print("Running... Component")
-
-import os
-import zipfile
-import lancedb
 import csv
-import json
-
-import pandas as pd
-
-from lancedb.pydantic import LanceModel, Vector
-from openai import OpenAI
+import logging
 from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
 
-from configuration import Configuration
+class Component(ComponentBase):
+    def __init__(self):
+        super().__init__()
+        self.table_rows: int = 0
 
-with open('../component_config/configSchema.json', 'r', encoding='utf-8') as config_file:
-    config = json.load(config_file)
-    embed_column = config.get('embedColumn')
+        if logging.getLogger().isEnabledFor(logging.INFO):
+            httpx_logger = logging.getLogger("httpx")
+            httpx_logger.setLevel(logging.ERROR)
 
-csvlt = '\n'
-csvdel = ','
-csvquo = '"'
+    def run(self):
+        try:
+            input_table = self._get_input_table()
+            self.table_rows = self.count_rows(input_table.full_path)
+            print(f"Number of rows in the input file: {self.table_rows}")
+        except Exception as e:
+            raise UserException(f"Error occurred while counting rows: {str(e)}")
 
-with open('../data/in/tables/processed.csv', mode='rt', encoding='utf-8') as in_file:
-    lazy_lines = (line.replace('\0', '') for line in in_file)
-    reader = csv.DictReader(lazy_lines, lineterminator=csvlt, delimiter=csvdel, quotechar=csvquo)
+    def _get_input_table(self):
+        if not self.get_input_tables_definitions():
+            raise UserException("No input table specified. Please provide one input table in the input mapping!")
+        if len(self.get_input_tables_definitions()) > 1:
+            raise UserException("Only one input table is supported")
+        return self.get_input_tables_definitions()[0]
 
-    for row in reader:
-        if embed_column in row:
-            text_to_embed = row[embed_column]
-            print(f"Text to embed from '{embed_column}' column:")
-        else:
-            print(f"Column '{embed_column}' not found in the CSV file.")
-        exit()
+    @staticmethod
+    def count_rows(file_path):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            row_count = sum(1 for row in reader) - 1
+        return row_count
 
-# MODEL_MAPPING = {
-#     "small_03": "text-embedding-3-small",
-#     "large_03": "text-embedding-3-large",
-#     "ada_002": "text-embedding-ada-002"
-# }
-
-# class EmbeddingComponent(ComponentBase):
-#     def __init__(self):
-#         super().__init__()
-#         self._configuration = None
-#         self.client = None
-#         self.db = None
-#         self.table = None
-#         self.model = None
-#         self.vector_size = None
-
-#     def configure(self):
-#         self._configuration = Configuration.load_from_dict(self.configuration.parameters)
-        
-#         api_key = self._configuration.pswd_api_key
-#         if not api_key:
-#             raise UserException("OpenAI API key is missing from the configuration.")
-
-#         os.environ["OPENAI_API_KEY"] = api_key
-#         self.client = OpenAI()
-
-#         self.model = MODEL_MAPPING[self._configuration.model]
-#         self.vector_size = self.get_vector_size(self.model)
-
-#         os.makedirs("data/out/files", exist_ok=True)
-#         self.db = lancedb.connect("data/out/files")
-
-#     def get_embedding(self, text):
-#         text = text.replace("\n", " ")
-#         return self.client.embeddings.create(input=[text], model=self.model).data[0].embedding
-
-#     def create_table(self):
-#         class Words(LanceModel):
-#             text: str
-#             vector: Vector(self.vector_size)
-
-#         self.table = self.db.create_table("embedded", schema=Words, mode="overwrite")
-
-#     def process_data(self):
-#         input_table = self.get_input_table_definition()
-#         df = pd.read_csv(input_table.full_path)
-
-#         embed_column = self._configuration.embed_column
-#         if embed_column not in df.columns:
-#             raise UserException(f"'{embed_column}' column not found in the input CSV file")
-
-#         data = []
-#         for count, entry in enumerate(df[embed_column], 1):
-#             embedding = self.get_embedding(entry)
-#             data.append({"text": entry, "vector": embedding})
-#             print(f"Added: {count}")
-
-#         print("Adding to table")
-#         try:
-#             self.table.add(data)
-#             print("Data added successfully")
-#         except Exception as e:
-#             raise UserException(f"Error adding data to table: {e}")
-
-#     def export_data(self):
-#         print("Exporting data to CSV")
-#         try:
-#             all_data = self.table.to_pandas()
-#             vector_df = pd.DataFrame(all_data['vector'].tolist(), columns=[f'vector_{i}' for i in range(self.vector_size)])
-#             export_df = pd.concat([all_data['text'], vector_df], axis=1)
-            
-#             output_table = self.create_out_table_definition('embedded_data_with_vectors.csv')
-#             export_df.to_csv(output_table.full_path, index=False)
-#             print("Data exported successfully")
-#             return output_table.full_path
-#         except Exception as e:
-#             raise UserException(f"Error exporting data to CSV: {e}")
-
-#     def zip_output_files(self):
-#         print("Zipping the output files")
-#         try:
-#             zip_path = os.path.join(self.get_output_path(), 'embedded_output.zip')
-            
-#             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-#                 # Add the CSV file
-#                 csv_path = self.export_data()
-#                 arcname = os.path.basename(csv_path)
-#                 zipf.write(csv_path, arcname)
-                
-#                 # Add the Lance directory
-#                 lance_dir = os.path.join(self.get_output_path(), 'embedded.lance')
-#                 for root, _, files in os.walk(lance_dir):
-#                     for file in files:
-#                         file_path = os.path.join(root, file)
-#                         arcname = os.path.relpath(file_path, lance_dir)
-#                         zipf.write(file_path, os.path.join('embedded.lance', arcname))
-            
-#             print(f"Successfully zipped output files to {zip_path}")
-#         except Exception as e:
-#             raise UserException(f"Error zipping output files: {e}")
-
-#     def get_output_path(self):
-#         return os.path.join(os.environ.get('KBC_DATADIR', ''), 'out', 'files')
-
-#     def run(self):
-#         self.configure()
-#         self.create_table()
-#         self.process_data()
-#         self.zip_output_files()
-
-#     def run(self):
-#         self.configure()
-#         self.create_table()
-#         self.process_data()
-#         self.export_data()
-#         self.zip_lance_directory()
-
-#     @staticmethod
-#     def get_vector_size(model_name):
-#         model_sizes = {
-#             'text-embedding-3-small': 1536,
-#             'text-embedding-3-large': 3072,
-#             'text-embedding-ada-002': 1536
-#         }
-#         return model_sizes.get(model_name, 1536)
-
-#     def get_input_table_definition(self):
-#         tables = self.get_input_tables_definitions()
-#         if len(tables) != 1:
-#             raise UserException("Exactly one input table is required.")
-#         return tables[0]
-
-# if __name__ == "__main__":
-#     try:
-#         comp = EmbeddingComponent()
-#         comp.execute_action()
-#     except UserException as e:
-#         print(f"User Exception: {e}")
-#         exit(1)
-#     except Exception as e:
-#         print(f"Unexpected error: {e}")
-#         exit(2)
+if __name__ == "__main__":
+    try:
+        comp = Component()
+        comp.execute_action()
+    except UserException as exc:
+        logging.exception(exc)
+        exit(1)
+    except Exception as exc:
+        logging.exception(exc)
+        exit(2)

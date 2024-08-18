@@ -45,6 +45,11 @@ class Component(ComponentBase):
                     embedding = self.get_embedding(text)
                     row['embedding'] = embedding
                     writer.writerow(row)
+                    
+                    # Print the embedding (first 25 characters if longer)
+                    embedding_str = str(embedding)
+                    print_embedding = embedding_str[:25] + "..." if len(embedding_str) > 25 else embedding_str
+                    print(f"Embedding for row {row_count}: {print_embedding}")
 
             print(f"Embedding process completed. Total rows processed: {row_count}")
             print(f"Output saved to {output_table.full_path}")

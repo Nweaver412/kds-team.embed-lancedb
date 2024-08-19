@@ -4,7 +4,8 @@
   "required": [
     "embedColumn",
     "#apiKey",
-    "model"
+    "model",
+    "outputFormat"
   ],
   "properties": {
     "model": {
@@ -41,6 +42,23 @@
       "minLength": 1,
       "description": "Column to be embedded by chosen function",
       "propertyOrder": 1
+    },
+    "outputFormat": {
+      "enum": [
+        "csv",
+        "lance"
+      ],
+      "type": "string",
+      "title": "Output Format",
+      "default": "csv",
+      "options": {
+        "enum_titles": [
+          "CSV",
+          "Lance"
+        ]
+      },
+      "description": "Choose the output format for the embeddings",
+      "propertyOrder": 4
     }
   }
 }

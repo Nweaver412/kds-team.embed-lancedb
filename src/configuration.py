@@ -35,6 +35,7 @@ class Configuration(ConfigurationBase):
     embedColumn: str
     pswd_apiKey: str
     model: str
+    outputFormat: str
 
     def __post_init__(self):
         # Map the enum values to their corresponding model names

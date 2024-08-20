@@ -103,7 +103,7 @@ class Component(ComponentBase):
     def _finalize_lance_output(self, lance_dir):
         print("Zipping the Lance directory")
         try:
-            zip_path = os.path.join(self.tables_out_path, 'embeddings_lance.zip')
+            zip_path = os.path.join(self.files_out_path, 'embeddings_lance.zip')
             
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for root, dirs, files in os.walk(lance_dir):

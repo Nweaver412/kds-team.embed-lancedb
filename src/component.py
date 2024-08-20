@@ -28,31 +28,35 @@ class Component(ComponentBase):
                 reader = csv.DictReader(input_file)
                 
                 if self._configuration.outputFormat == 'csv':
+                    output_file = open(output_table.full_path, 'w', encoding='utf-8', newline='')
                     fieldnames = reader.fieldnames + ['embedding']
-                    with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
-                        writer = csv.DictWriter(output_file, fieldnames=fieldnames)
-                        writer.writeheader()
+                    writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+                    writer.writeheader()
                 
                 data = []
                 row_count = 0
-                for row in reader:
-                    row_count += 1
-                    text = row[self._configuration.embedColumn]
-                    embedding = self.get_embedding(text)
-                    
-                    if self._configuration.outputFormat == 'csv':
-                        row['embedding'] = embedding
-                        writer.writerow(row)
-                    else:  # Lance
-                        lance_row = {**row, 'embedding': embedding}
-                        data.append(lance_row)
-                    
-                    if self._configuration.outputFormat == 'lance' and row_count % 1000 == 0:
-                        self._insert_to_lance(lance_db, data)
-                        data = []
+                try:
+                    for row in reader:
+                        row_count += 1
+                        text = row[self._configuration.embedColumn]
+                        embedding = self.get_embedding(text)
+                        
+                        if self._configuration.outputFormat == 'csv':
+                            row['embedding'] = embedding
+                            writer.writerow(row)
+                        else:  # Lance
+                            lance_row = {**row, 'embedding': embedding}
+                            data.append(lance_row)
+                        
+                        if self._configuration.outputFormat == 'lance' and row_count % 1000 == 0:
+                            self._insert_to_lance(lance_db, data)
+                            data = []
 
-                if self._configuration.outputFormat == 'lance' and data:
-                    self._insert_to_lance(lance_db, data)
+                    if self._configuration.outputFormat == 'lance' and data:
+                        self._insert_to_lance(lance_db, data)
+                finally:
+                    if self._configuration.outputFormat == 'csv':
+                        output_file.close()
 
             print(f"Embedding process completed. Total rows processed: {row_count}")
             print(f"Output saved in {self._configuration.outputFormat} format")

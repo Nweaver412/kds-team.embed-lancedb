@@ -1,57 +1,48 @@
-Embed LanceDB
-=============
+# Embedding Transformation
 
-Description
+This component allows you to embed tables using OpenAI embedding algorithms with data provided from your KBC project.
 
-**Table of contents:**
+- [TOC]
 
-[TOC]
+---
 
-Functionality notes
-===================
+## Configuration
 
-Prerequisites
-=============
+### Parameters:
 
-Get the API token, register application, etc.
+#### AI Service Provider: OpenAI
 
-Features
-========
+- **API Key (`#api_token`):** Obtain your API key from the [OpenAI platform settings](https://platform.openai.com/account/api-keys).
 
-| **Feature**             | **Note**                                      |
-|-------------------------|-----------------------------------------------|
-| Generic UI form         | Dynamic UI form                               |
-| Row Based configuration | Allows structuring the configuration in rows. |
-| oAuth                   | oAuth authentication enabled                  |
-| Incremental loading     | Allows fetching data in new increments.       |
-| Backfill mode           | Support for seamless backfill setup.          |
-| Date range filter       | Specify date range.                           |
+### Other options:
+- **Column to Embed(`embed_column`)** 
+- **Embedding Model (`model`):** The model that will generate the embeddings. [Learn more](https://platform.openai.com/docs/models/embeddings).
+- **Output Format (`output_format`):** Determines if embeddings will be sent to a zipped lance file, or to a Keboola Table
+- **Output Table Name (`output_table_name`)**
+- **Output File Name (`output_file_name`)**
 
-Supported endpoints
-===================
 
-If you need more endpoints, please submit your request to
-[ideas.keboola.com](https://ideas.keboola.com/)
+---
 
-Configuration
-=============
+### Component Configuration Example
 
-Param 1
--------
+**Generic configuration**
 
-Param 2
--------
+```json
 
-Output
-======
+```
 
-List of tables, foreign keys, schema.
+**Row configuration**
 
-Development
------------
+```json
 
-If required, change local data folder (the `CUSTOM_FOLDER` placeholder) path to
-your custom path in the `docker-compose.yml` file:
+```
+
+
+# Development
+
+If required, change local data folder (the `CUSTOM_FOLDER` placeholder) path to your custom path in
+the `docker-compose.yml` file:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     volumes:
@@ -59,12 +50,11 @@ your custom path in the `docker-compose.yml` file:
       - ./CUSTOM_FOLDER:/data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Clone this repository, init the workspace and run the component with following
-command:
+Clone this repository, init the workspace and run the component with following command:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-git clone https://github.com/Nweaver412/kds-team.embed-lancedb kds-team.embed-lancedb
-cd kds-team.embed-lancedb
+git clone git@github.com:keboola/app-transformation-lanceDB-embeddings.git
+cd app-transformation-lanceDB-embeddings
 docker-compose build
 docker-compose run --rm dev
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,5 +69,4 @@ Integration
 ===========
 
 For information about deployment and integration with KBC, please refer to the
-[deployment section of developers
-documentation](https://developers.keboola.com/extend/component/deployment/)
+[deployment section of developers documentation](https://developers.keboola.com/extend/component/deployment/)

@@ -91,7 +91,7 @@ class Component(ComponentBase):
             raise UserException("Only one input table is supported")
         return self.get_input_tables_definitions()[0]
 
-    def _get_output_table(self):
+    def _get_output_table(self): #!!KAI-498
         return self.create_out_table_definition('embeddings.csv')
 
     def _get_lance_schema(self, fieldnames):
@@ -102,7 +102,7 @@ class Component(ComponentBase):
 
     def _finalize_lance_output(self, lance_dir):
         print("Zipping the Lance directory")
-        try:
+        try: #!!KAI-500
             zip_path = os.path.join(self.files_out_path, 'embeddings_lance.zip')
             
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:

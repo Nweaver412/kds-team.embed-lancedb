@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+import shutil
 import lancedb
 import pyarrow as pa
 from keboola.component.base import ComponentBase
@@ -19,15 +20,15 @@ class Component(ComponentBase):
         self.init_client()
         try:
             input_table = self._get_input_table()
-            output_table = self._get_output_table()
             
             with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
                 reader = csv.DictReader(input_file)
                 
                 if self._configuration.outputFormat == 'lance':
                     schema = self._get_lance_schema(reader.fieldnames)
-                    lance_db = self._prepare_lance_db(schema)
+                    lance_db, lance_table = self._prepare_lance_db(schema)
                 elif self._configuration.outputFormat == 'csv':
+                    output_table = self._get_output_table()
                     output_file = open(output_table.full_path, 'w', encoding='utf-8', newline='')
                     fieldnames = reader.fieldnames + ['embedding']
                     writer = csv.DictWriter(output_file, fieldnames=fieldnames)
@@ -49,14 +50,16 @@ class Component(ComponentBase):
                             data.append(lance_row)
                         
                         if self._configuration.outputFormat == 'lance' and row_count % 1000 == 0:
-                            self._insert_to_lance(lance_db, data)
+                            self._insert_to_lance(lance_table, data)
                             data = []
 
                     if self._configuration.outputFormat == 'lance' and data:
-                        self._insert_to_lance(lance_db, data)
+                        self._insert_to_lance(lance_table, data)
                 finally:
                     if self._configuration.outputFormat == 'csv':
                         output_file.close()
+                    elif self._configuration.outputFormat == 'lance':
+                        self._finalize_lance_output(lance_db)
 
             print(f"Embedding process completed. Total rows processed: {row_count}")
             print(f"Output saved in {self._configuration.outputFormat} format")
@@ -97,11 +100,23 @@ class Component(ComponentBase):
         lance_dir = os.path.join(self.tables_out_path, 'lance_db')
         os.makedirs(lance_dir, exist_ok=True)
         db = lancedb.connect(lance_dir)
-        return db.create_table("embeddings", schema=schema, mode="overwrite")
+        table = db.create_table("embeddings", schema=schema, mode="overwrite")
+        return db, table
 
     def _insert_to_lance(self, table, data):
         df = pa.Table.from_pylist(data)
         table.add(df)
+
+    def _finalize_lance_output(self, lance_db):
+        lance_db.close()
+        
+        # zip lance db
+        lance_dir = os.path.join(self.tables_out_path, 'lance_db')
+        zip_path = os.path.join(self.tables_out_path, 'embeddings.lance.zip')
+        shutil.make_archive(zip_path[:-4], 'zip', lance_dir)
+        
+        # Remove the original Lance directory
+        shutil.rmtree(lance_dir)
 
 if __name__ == "__main__":
     try:

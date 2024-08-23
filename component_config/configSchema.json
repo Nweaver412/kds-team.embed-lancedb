@@ -38,10 +38,17 @@
     "embedColumn": {
       "type": "string",
       "title": "Column to Embed",
-      "default": "",
-      "minLength": 1,
       "description": "Column to be embedded by chosen function",
-      "propertyOrder": 1
+      "propertyOrder": 1,
+      "enum": [],
+      "format": "select",
+      "options": {
+        "async": {
+          "label": "Load Columns",
+          "action": "listColumns",
+          "autoload": []
+        }
+      }
     },
     "outputFormat": {
       "enum": [

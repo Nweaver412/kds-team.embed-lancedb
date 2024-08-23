@@ -9,10 +9,13 @@ import pyarrow as pa
 import pandas as pd
 
 from keboola.component.base import ComponentBase, sync_action
+from keboola.component.sync_actions import ValidationResult, MessageType
+from keboola.component.dao import TableDefinition
 from keboola.component.exceptions import UserException
+from kbcstorage.tables import Tables
+from kbcstorage.client import Client
 from configuration import Configuration
 from openai import OpenAI
-from keboola.component.sync_actions import SelectElement, ValidationResult, MessageType
 
 class Component(ComponentBase):
     def __init__(self):
@@ -117,7 +120,7 @@ class Component(ComponentBase):
             raise
 
     @sync_action('listColumns')
-    def list_columns(self) -> SelectElement:
+    def list_columns(self):
         """
         Sync action to fill the UI element for column selection.
         """

@@ -108,7 +108,10 @@ class Component(ComponentBase):
     def _finalize_lance_output(self, lance_dir):
         print("Zipping the Lance directory")
         try:
-            zip_path = os.path.join(self.files_out_path, 'embeddings_lance.zip')
+            output_name = self._configuration.destination.output_name
+            if not output_name.endswith('.zip'):
+                output_name += '.zip'
+            zip_path = os.path.join(self.files_out_path, output_name)
             
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for root, dirs, files in os.walk(lance_dir):
@@ -119,10 +122,10 @@ class Component(ComponentBase):
             
             print(f"Successfully zipped Lance directory to {zip_path}")
             
-            # Remove the original Lance directory
+            # Remove the original Lance
             shutil.rmtree(lance_dir)
         except Exception as e:
-            print(f"Error zipping Lance directory: {e}")
+            print(f"Error zipping Lance: {e}")
             raise
 
 if __name__ == "__main__":

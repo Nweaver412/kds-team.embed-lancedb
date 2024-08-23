@@ -119,17 +119,12 @@ class Component(ComponentBase):
     @sync_action('listColumns')
     def list_columns(self) -> SelectElement:
         """
-        Sync action to list columns from the input table.
+        Sync action to fill the UI element for column selection.
         """
-        try:
-            input_table = self._get_input_table()
-            with open(input_table.full_path, 'r', encoding='utf-8') as csv_file:
-                reader = csv.reader(csv_file)
-                headers = next(reader)
-            
-            return SelectElement([{'label': col, 'value': col} for col in headers])
-        except Exception as e:
-            return ValidationResult(f"Failed to load columns: {str(e)}", MessageType.ERROR)
+        self.init_configuration()
+        table_id = self._get_storage_source()
+        columns = self._get_table_columns(table_id)
+        return [{"value": c, "label": c} for c in columns]
 
 if __name__ == "__main__":
     try:

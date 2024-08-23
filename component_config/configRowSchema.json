@@ -1,1 +1,52 @@
-{}
+{
+    "type": "object",
+    "title": "Destination Configuration",
+    "required": [
+      "destination"
+    ],
+    "properties": {
+      "destination": {
+        "type": "object",
+        "title": "Destination",
+        "required": [
+          "output_name",
+          "incremental_load",
+          "primary_keys_array"
+        ],
+        "properties": {
+          "output_name": {
+            "type": "string",
+            "title": "Output Name",
+            "description": "Name of the output file or table.",
+            "propertyOrder": 1
+          },
+          "incremental_load": {
+            "type": "boolean",
+            "format": "checkbox",
+            "title": "Incremental Load",
+            "description": "If incremental load is turned on, the table will be updated instead of rewritten.",
+            "propertyOrder": 2
+          },
+          "primary_keys_array": {
+            "type": "array",
+            "title": "Primary Keys",
+            "format": "select",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true,
+            "options": {
+              "tags": true,
+              "async": {
+                "label": "Re-load columns",
+                "action": "listPkeys"
+              }
+            },
+            "description": "You can enter multiple columns separated by commas. The primary key can consist of multiple columns.",
+            "propertyOrder": 3
+          }
+        },
+        "propertyOrder": 1
+      }
+    }
+  }

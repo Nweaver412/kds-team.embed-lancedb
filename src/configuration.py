@@ -7,12 +7,12 @@ import dataconf
 
 class ConfigurationBase:
     @staticmethod
-    def _convert_private_value(value: str):
-        return value.replace('"#', '"pswd_')
+    def _convert_privatevalue(value: str):
+        return value.replace('"#', '"pswd')
 
     @staticmethod
-    def _convert_private_value_inv(value: str):
-        if value and value.startswith("pswd_"):
+    def _convert_private_valueinv(value: str):
+        if value and value.startswith("pswd"):
             return value.replace("pswd_", "#", 1)
         else:
             return value
@@ -31,20 +31,13 @@ class ConfigurationBase:
                 and f.default_factory == dataclasses.MISSING]
 
 @dataclass
-class Destination(ConfigurationBase):
-    incremental_load: bool
-    output_name: str
-    primary_keys_array: list[str]
-
-@dataclass
 class Configuration(ConfigurationBase):
     embedColumn: str
     pswd_apiKey: str
     model: str
     outputFormat: str
-    destination: Destination
 
-    def __post_init__(self):
+    def post_init(self):
         # Map the enum values to their corresponding model names
         model_mapping = {
             "small_03": "text-embedding-3-small",

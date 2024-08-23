@@ -33,7 +33,7 @@ class Component(ComponentBase):
                     os.makedirs(lance_dir, exist_ok=True)
                     db = lancedb.connect(lance_dir)
                     schema = self._get_lance_schema(reader.fieldnames)
-                    table = db.create_table(self._configuration.output_name, schema=schema, mode="overwrite")
+                    table = db.create_table("embeddings", schema=schema, mode="overwrite")
                 elif self._configuration.outputFormat == 'csv':
                     output_table = self._get_output_table()
                     output_file = open(output_table.full_path, 'w', encoding='utf-8', newline='')
@@ -77,7 +77,7 @@ class Component(ComponentBase):
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
 
     def init_client(self):
-        self.client = OpenAI(api_key=self._configuration.authentication.pswd_api_token)
+        self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
 
     def get_embedding(self, text):
         try:
@@ -94,7 +94,7 @@ class Component(ComponentBase):
         return self.get_input_tables_definitions()[0]
 
     def _get_output_table(self):
-        output_name = self._configuration.output_name
+        output_name = self._configuration.destination.output_name
         if not output_name.endswith('.csv'):
             output_name += '.csv'
         return self.create_out_table_definition(output_name)
@@ -108,8 +108,7 @@ class Component(ComponentBase):
     def _finalize_lance_output(self, lance_dir):
         print("Zipping the Lance directory")
         try:
-            zip_name = f"{self._configuration.output_name}.zip"
-            zip_path = os.path.join(self.files_out_path, zip_name)
+            zip_path = os.path.join(self.files_out_path, 'embeddings_lance.zip')
             
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for root, dirs, files in os.walk(lance_dir):

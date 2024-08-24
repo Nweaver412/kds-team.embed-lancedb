@@ -85,8 +85,14 @@ class Component(ComponentBase):
     def _finalize_lance_output(self, lance_dir):
         print("Zipping the Lance directory")
         try:
-            zip_path = os.path.join(self.tables_out_path, 'embeddings_lance.zip')
-            
+            output_files = self.get_output_files_definitions()
+            output_file = output_files[0]
+            output_mapping = FileOutputMapping.create_from_dict(output_file.to_dict())
+
+            # Use the name from output_mapping for the zip file
+            zip_filename = f"{output_mapping.name}.zip"
+            zip_path = os.path.join(self.files_out_path, zip_filename)
+
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for root, dirs, files in os.walk(lance_dir):
                     for file in files:
@@ -96,11 +102,9 @@ class Component(ComponentBase):
             
             print(f"Successfully zipped Lance directory to {zip_path}")
             
-            # Remove the original Lance directory
             shutil.rmtree(lance_dir)
         except Exception as e:
             print(f"Error zipping Lance directory: {e}")
-            raise
 
     @sync_action('listColumns')
     def list_columns(self):

@@ -7,11 +7,11 @@ import dataconf
 
 class ConfigurationBase:
     @staticmethod
-    def _convert_privatevalue(value: str):
+    def _convert_privat_evalue(value: str):
         return value.replace('"#', '"pswd')
 
     @staticmethod
-    def _convert_private_valueinv(value: str):
+    def _convert_private_value_inv(value: str):
         if value and value.startswith("pswd"):
             return value.replace("pswd_", "#", 1)
         else:

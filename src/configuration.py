@@ -31,7 +31,7 @@ class ConfigurationBase:
                 and f.default_factory == dataclasses.MISSING]
 
 @dataclass
-class Configuration(ConfigurationBase):  # Add inheritance here
+class Configuration(ConfigurationBase):
     embedColumn: str
     pswd_apiKey: str
     model: str

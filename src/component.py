@@ -27,37 +27,41 @@ class Component(ComponentBase):
         self.init_client()
         try:
             input_table = self._get_input_table()
+            print(f"Input table retrieved: {input_table.full_path}")
             
-            with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
+            output_table = self._get_output_table()
+            print(f"Output table created: {output_table.full_path}")
+            
+            print("Starting embedding process")
+            with open(input_table.full_path, 'r', encoding='utf-8') as input_file, \
+                 open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
+                
                 reader = csv.DictReader(input_file)
-                
-                if self._configuration.outputFormat == 'csv':
-                    output_tables = self.get_output_tables_definitions()
+                fieldnames = reader.fieldnames + ['embedding']
+                writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+                writer.writeheader()
+
+                row_count = 0
+                for row in reader:
+                    row_count += 1
+                    if row_count % 100 == 0:
+                        print(f"Processing row {row_count}")
+                    text = row[self._configuration.embedColumn]
+                    embedding = self.get_embedding(text)
+                    row['embedding'] = embedding
+                    writer.writerow(row)
                     
-                    if not output_tables:
-                        raise UserException("No output table specified for CSV.")
-                    
-                    output_table = output_tables[0]
-                    output_mapping = TableOutputMapping.create_from_dict(output_table.to_dict())
-                    
-                    with open(output_mapping.full_path, 'w', encoding='utf-8', newline='') as output_file:
-                        fieldnames = reader.fieldnames + ['embedding']
-                        writer = csv.DictWriter(output_file, fieldnames=fieldnames)
-                        writer.writeheader()
-                
-                        for row in reader:
-                            text = row[self._configuration.embedColumn]
-                            embedding = self.get_embedding(text)
-                            row['embedding'] = embedding
-                            writer.writerow(row)
-                    
-                    print(f"CSV output saved as {output_mapping.name}")
+                    embedding_str = str(embedding)
+                    print_embedding = embedding_str[:25] + "..." if len(embedding_str) > 25 else embedding_str
+                    print(f"Embedding for row {row_count}: {print_embedding}")
+
+            print(f"Embedding process completed. Total rows processed: {row_count}")
         except Exception as e:
             raise UserException(f"Error occurred during embedding process: {str(e)}")
 
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
-        self._configuration = Configuration.load_from_dict(self.configuration.parameters)
+        self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
 
     def init_client(self):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
@@ -65,8 +69,10 @@ class Component(ComponentBase):
     def get_embedding(self, text):
         try:
             response = self.client.embeddings.create(input=[text], model=self._configuration.model)
+            print("Embedding received")
             return response.data[0].embedding
         except Exception as e:
+            print(f"Error getting embedding: {str(e)}")
             raise UserException(f"Error getting embedding: {str(e)}")
 
     def _get_input_table(self):
@@ -76,53 +82,19 @@ class Component(ComponentBase):
             raise UserException("Only one input table is supported")
         return self.get_input_tables_definitions()[0]
 
-    def _get_lance_schema(self, fieldnames):
-        schema = pa.schema([
-            (name, pa.string()) for name in fieldnames
-        ] + [('embedding', pa.list_(pa.float32()))])
-        return schema
-
-    def _finalize_lance_output(self, lance_dir):
-        print("Zipping the Lance directory")
-        try:
-            output_files = self.get_output_files_definitions()
-            output_file = output_files[0]
-            output_mapping = FileOutputMapping.create_from_dict(output_file.to_dict())
-
-            # Use the name from output_mapping for the zip file
-            zip_filename = f"{output_mapping.name}.zip"
-            zip_path = os.path.join(self.files_out_path, zip_filename)
-
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, dirs, files in os.walk(lance_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, lance_dir)
-                        zipf.write(file_path, arcname)
-            
-            print(f"Successfully zipped Lance directory to {zip_path}")
-            
-            shutil.rmtree(lance_dir)
-        except Exception as e:
-            print(f"Error zipping Lance directory: {e}")
-
-    @sync_action('listColumns')
-    def list_columns(self):
-        """
-        Sync action to fill the UI element for column selection.
-        """
-        self.init_configuration()
-        table_id = self._get_storage_source()
-        columns = self._get_table_columns(table_id)
-        return [{"value": c, "label": c} for c in columns]
+    def _get_output_table(self):
+        output_table = self.create_out_table_definition('embeddings.csv')
+        return output_table
 
 if __name__ == "__main__":
     try:
         comp = Component()
         comp.execute_action()
     except UserException as exc:
+        print(f"UserException occurred: {str(exc)}")
         logging.exception(exc)
         exit(1)
     except Exception as exc:
+        print(f"Unexpected exception occurred: {str(exc)}")
         logging.exception(exc)
         exit(2)

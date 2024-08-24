@@ -2,6 +2,7 @@
   "type": "object",
   "title": "Lance Embedder",
   "required": [
+    "embedColumn",
     "#apiKey",
     "model",
     "outputFormat"
@@ -23,7 +24,7 @@
           "text-embedding-ada-002"
         ]
       },
-      "propertyOrder": 2
+      "propertyOrder": 3
     },
     "#apiKey": {
       "type": "string",
@@ -32,7 +33,22 @@
       "default": "",
       "minLength": 1,
       "description": "API Key for embedding model",
-      "propertyOrder": 1
+      "propertyOrder": 2
+    },
+    "embedColumn": {
+      "type": "string",
+      "title": "Column to Embed",
+      "description": "Column to be embedded by chosen function",
+      "propertyOrder": 1,
+      "enum": [],
+      "format": "select",
+      "options": {
+        "async": {
+          "label": "Load Columns",
+          "action": "listColumns",
+          "autoload": []
+        }
+      }
     },
     "outputFormat": {
       "enum": [
@@ -49,7 +65,7 @@
         ]
       },
       "description": "Choose the output format for the embeddings",
-      "propertyOrder": 3
+      "propertyOrder": 4
     }
   }
 }

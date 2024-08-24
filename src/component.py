@@ -39,7 +39,14 @@ class Component(ComponentBase):
                     schema = self._get_lance_schema(reader.fieldnames)
                     table = db.create_table("embeddings", schema=schema, mode="overwrite")
                 elif self._configuration.outputFormat == 'csv':
-                    output_table = self.create_out_table_definition('embeddings.csv')
+                    output_tables = self.get_output_tables_definitions()
+                    
+                    if not output_tables:
+                        raise UserException("No output table specified for CSV.")
+                    
+                    output_table = output_tables[0]
+                    output_name = output_table.name.split('.')[-1]  # Extract the table name from the full path
+                    
                     with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
                         fieldnames = reader.fieldnames + ['embedding']
                         writer = csv.DictWriter(output_file, fieldnames=fieldnames)
@@ -50,6 +57,8 @@ class Component(ComponentBase):
                             embedding = self.get_embedding(text)
                             row['embedding'] = embedding
                             writer.writerow(row)
+                    
+                    print(f"CSV output saved as {output_name}")
                 else:  # Lance
                     data = []
                     for row in reader:

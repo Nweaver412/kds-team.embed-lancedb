@@ -7,7 +7,7 @@ import dataconf
 
 class ConfigurationBase:
     @staticmethod
-    def _convert_privat_evalue(value: str):
+    def _convert_private_value(value: str):
         return value.replace('"#', '"pswd')
 
     @staticmethod
@@ -42,6 +42,6 @@ class Configuration(ConfigurationBase):
         model_mapping = {
             "small_03": "text-embedding-3-small",
             "large_03": "text-embedding-3-large",
-            "ada_002": "text-embedding-ada-002"
+            "ada_002":  "text-embedding-ada-002"
         }
         self.model = model_mapping.get(self.model, self.model)

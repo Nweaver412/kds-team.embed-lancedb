@@ -10,10 +10,9 @@ import pandas as pd
 
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
-from keboola.component.dao import TableDefinition
+from keboola.component.dao import TableOutputMapping, FileOutputMapping
 from keboola.component.exceptions import UserException
-from kbcstorage.tables import Tables
-from kbcstorage.client import Client
+
 from configuration import Configuration
 from openai import OpenAI
 
@@ -32,22 +31,16 @@ class Component(ComponentBase):
             with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
                 reader = csv.DictReader(input_file)
                 
-                if self._configuration.outputFormat == 'lance':
-                    lance_dir = os.path.join(self.tables_out_path, 'lance_db')
-                    os.makedirs(lance_dir, exist_ok=True)
-                    db = lancedb.connect(lance_dir)
-                    schema = self._get_lance_schema(reader.fieldnames)
-                    table = db.create_table("embeddings", schema=schema, mode="overwrite")
-                elif self._configuration.outputFormat == 'csv':
+                if self._configuration.outputFormat == 'csv':
                     output_tables = self.get_output_tables_definitions()
                     
                     if not output_tables:
                         raise UserException("No output table specified for CSV.")
                     
                     output_table = output_tables[0]
-                    output_name = output_table.name.split('.')[-1]  # Extract the table name from the full path
+                    output_mapping = TableOutputMapping.create_from_dict(output_table.to_dict())
                     
-                    with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
+                    with open(output_mapping.full_path, 'w', encoding='utf-8', newline='') as output_file:
                         fieldnames = reader.fieldnames + ['embedding']
                         writer = csv.DictWriter(output_file, fieldnames=fieldnames)
                         writer.writeheader()
@@ -58,26 +51,7 @@ class Component(ComponentBase):
                             row['embedding'] = embedding
                             writer.writerow(row)
                     
-                    print(f"CSV output saved as {output_name}")
-                else:  # Lance
-                    data = []
-                    for row in reader:
-                        text = row[self._configuration.embedColumn]
-                        embedding = self.get_embedding(text)
-                        lance_row = {**row, 'embedding': embedding}
-                        data.append(lance_row)
-                        if len(data) >= 1000:
-                            table.add(data)
-                            data = []
-
-                    if data:
-                        table.add(data)
-
-                if self._configuration.outputFormat == 'lance':
-                    self._finalize_lance_output(lance_dir)
-
-            print(f"Embedding process completed.")
-            print(f"Output saved in {self._configuration.outputFormat} format")
+                    print(f"CSV output saved as {output_mapping.name}")
         except Exception as e:
             raise UserException(f"Error occurred during embedding process: {str(e)}")
 

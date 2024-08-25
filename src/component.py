@@ -39,7 +39,6 @@ class Component(ComponentBase):
         try:
             input_table = self._get_input_table()
             self.input_table_name = os.path.splitext(os.path.basename(input_table.full_path))[0]
-            out_table = self._build_out_table(input_table)
 
             with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
                 reader = csv.DictReader(input_file)

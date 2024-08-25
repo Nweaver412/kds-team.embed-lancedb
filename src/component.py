@@ -4,12 +4,16 @@ import os
 import shutil
 import zipfile
 import lancedb
+
 import pyarrow as pa
 import pandas as pd
+
 from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
 from configuration import Configuration
+
 from openai import OpenAI
+
 class Component(ComponentBase):
     def __init__(self):
         super().__init__()

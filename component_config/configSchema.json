@@ -4,7 +4,8 @@
   "required": [
     "embedColumn",
     "#apiKey",
-    "model"
+    "model",
+    "outputFormat"
   ],
   "properties": {
     "model": {
@@ -37,10 +38,34 @@
     "embedColumn": {
       "type": "string",
       "title": "Column to Embed",
-      "default": "",
-      "minLength": 1,
       "description": "Column to be embedded by chosen function",
-      "propertyOrder": 1
+      "propertyOrder": 1,
+      "enum": [],
+      "format": "select",
+      "options": {
+        "async": {
+          "label": "Load Columns",
+          "action": "listColumns",
+          "autoload": []
+        }
+      }
+    },
+    "outputFormat": {
+      "enum": [
+        "csv",
+        "lance"
+      ],
+      "type": "string",
+      "title": "Output Format",
+      "default": "csv",
+      "options": {
+        "enum_titles": [
+          "CSV",
+          "Lance"
+        ]
+      },
+      "description": "Choose the output format for the embeddings",
+      "propertyOrder": 4
     }
   }
 }

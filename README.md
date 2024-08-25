@@ -18,8 +18,6 @@ This component allows you to embed tables using OpenAI embedding algorithms with
 - **Column to Embed(`embed_column`)** 
 - **Embedding Model (`model`):** The model that will generate the embeddings. [Learn more](https://platform.openai.com/docs/models/embeddings).
 - **Output Format (`output_format`):** Determines if embeddings will be sent to a zipped lance file, or to a Keboola Table
-- **Output Table Name (`output_table_name`)**
-- **Output File Name (`output_file_name`)**
 
 
 ---

@@ -4,16 +4,12 @@ import os
 import shutil
 import zipfile
 import lancedb
-
 import pyarrow as pa
 import pandas as pd
-
 from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
 from configuration import Configuration
-
 from openai import OpenAI
-
 class Component(ComponentBase):
     def __init__(self):
         super().__init__()
@@ -24,10 +20,8 @@ class Component(ComponentBase):
         self.init_client()
         try:
             input_table = self._get_input_table()
-            
             with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
                 reader = csv.DictReader(input_file)
-                
                 if self._configuration.outputFormat == 'lance':
                     lance_dir = os.path.join(self.tables_out_path, 'lance_db')
                     os.makedirs(lance_dir, exist_ok=True)
@@ -40,21 +34,18 @@ class Component(ComponentBase):
                     fieldnames = reader.fieldnames + ['embedding']
                     writer = csv.DictWriter(output_file, fieldnames=fieldnames)
                     writer.writeheader()
-                
                 data = []
                 row_count = 0
                 for row in reader:
                     row_count += 1
                     text = row[self._configuration.embedColumn]
                     embedding = self.get_embedding(text)
-                    
                     if self._configuration.outputFormat == 'csv':
                         row['embedding'] = embedding
                         writer.writerow(row)
                     else:  # Lance
                         lance_row = {**row, 'embedding': embedding}
                         data.append(lance_row)
-                    
                     if self._configuration.outputFormat == 'lance' and row_count % 1000 == 0:
                         table.add(data)
                         data = []
@@ -96,21 +87,18 @@ class Component(ComponentBase):
         print("Zipping the Lance directory")
         try:
             zip_path = os.path.join(self.files_out_path, 'embeddings_lance.zip')
-
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for root, dirs, files in os.walk(lance_dir):
                     for file in files:
                         file_path = os.path.join(root, file)
                         arcname = os.path.relpath(file_path, lance_dir)
                         zipf.write(file_path, arcname)
-            
             print(f"Successfully zipped Lance directory to {zip_path}")
-            
             # Remove the original Lance directory
             shutil.rmtree(lance_dir)
         except Exception as e:
             print(f"Error zipping Lance directory: {e}")
-            raise
+            raise 
 if __name__ == "__main__":
     try:
         comp = Component()

@@ -83,19 +83,17 @@ class Component(ComponentBase):
             raise UserException(f"Error occurred during embedding process: {str(e)}")
 
     def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
-        destination_config = self.configuration.parameters['destination']
-
-        if not (out_table_name := destination_config.get("output_table_name")):
+        if not (out_table_name := self._configuration.output_table_name):
             out_table_name = f"app-embeddings-{self.environment_variables.config_row_id}.csv"
         else:
             out_table_name = f"{out_table_name}.csv"
 
         self.out_table_columns = input_table.columns + ['embedding']
 
-        primary_key = destination_config.get('primary_keys_array', [])
+        primary_key = self._configuration.primary_keys or []
+        incremental_load = self._configuration.incremental_load or False
 
-        incremental_load = destination_config.get('incremental_load', False)
-        return self.create_out_table_definition(out_table_name, columns=[], primary_key=primary_key,
+        return self.create_out_table_definition(out_table_name, columns=self.out_table_columns, primary_key=primary_key,
                                                 incremental=incremental_load)
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())

@@ -36,13 +36,18 @@ class Component(ComponentBase):
         super().__init__()
         self._configuration = None
         self.client = None
+        self.out_table_columns = []
+
     def run(self):
         self.init_configuration()
         self.init_client()
         try:
             input_table = self._get_input_table()
+            out_table = self._build_out_table(input_table)
+
             with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
                 reader = csv.DictReader(input_file)
+                
                 if self._configuration.outputFormat == 'lance':
                     lance_dir = os.path.join(self.tables_out_path, 'lance_db')
                     os.makedirs(lance_dir, exist_ok=True)
@@ -50,36 +55,55 @@ class Component(ComponentBase):
                     schema = self._get_lance_schema(reader.fieldnames)
                     table = db.create_table("embeddings", schema=schema, mode="overwrite")
                 elif self._configuration.outputFormat == 'csv':
-                    output_table = self._get_output_table()
-                    output_file = open(output_table.full_path, 'w', encoding='utf-8', newline='')
-                    fieldnames = reader.fieldnames + ['embedding']
-                    writer = csv.DictWriter(output_file, fieldnames=fieldnames)
-                    writer.writeheader()
-                data = []
-                row_count = 0
-                for row in reader:
-                    row_count += 1
-                    text = row[self._configuration.embedColumn]
-                    embedding = self.get_embedding(text)
-                    if self._configuration.outputFormat == 'csv':
-                        row['embedding'] = embedding
-                        writer.writerow(row)
-                    else:  # Lance
-                        lance_row = {**row, 'embedding': embedding}
-                        data.append(lance_row)
-                    if self._configuration.outputFormat == 'lance' and row_count % 1000 == 0:
-                        table.add(data)
+                    with open(out_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
+                        writer = csv.DictWriter(output_file, fieldnames=self.out_table_columns)
+                        writer.writeheader()
+                        
                         data = []
-                if self._configuration.outputFormat == 'lance' and data:
-                    table.add(data)
-                if self._configuration.outputFormat == 'csv':
-                    output_file.close()
-                elif self._configuration.outputFormat == 'lance':
+                        row_count = 0
+                        for row in reader:
+                            row_count += 1
+                            text = row[self._configuration.embedColumn]
+                            embedding = self.get_embedding(text)
+                            if self._configuration.outputFormat == 'csv':
+                                row['embedding'] = embedding
+                                writer.writerow(row)
+                            else:  # Lance
+                                lance_row = {**row, 'embedding': embedding}
+                                data.append(lance_row)
+                            if self._configuration.outputFormat == 'lance' and row_count % 1000 == 0:
+                                table.add(data)
+                                data = []
+                        
+                        if self._configuration.outputFormat == 'lance' and data:
+                            table.add(data)
+
+                if self._configuration.outputFormat == 'lance':
                     self._finalize_lance_output(lance_dir)
+
             print(f"Embedding process completed. Total rows processed: {row_count}")
             print(f"Output saved in {self._configuration.outputFormat} format")
+
+            self.write_manifest(out_table)
+
         except Exception as e:
             raise UserException(f"Error occurred during embedding process: {str(e)}")
+
+    def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
+        destination_config = self.configuration.parameters['destination']
+
+        if not (out_table_name := destination_config.get("output_table_name")):
+            out_table_name = f"app-embeddings-{self.environment_variables.config_row_id}.csv"
+        else:
+            out_table_name = f"{out_table_name}.csv"
+
+        self.out_table_columns = input_table.columns + ['embedding']
+
+        primary_key = destination_config.get('primary_keys_array', [])
+
+        incremental_load = destination_config.get('incremental_load', False)
+        return self.create_out_table_definition(out_table_name, columns=[], primary_key=primary_key,
+                                                incremental=incremental_load)
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)

@@ -5,6 +5,7 @@ import shutil
 import zipfile
 import lancedb
 import csv
+import dataclasses
 import logging
 from typing import List
 import json
@@ -83,7 +84,7 @@ class Component(ComponentBase):
             raise UserException(f"Error occurred during embedding process: {str(e)}")
 
     def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
-        if not (out_table_name := self._configuration.output_table_name):
+        if not (out_table_name := self._get_output_table.__name__):
             out_table_name = f"app-embeddings-{self.environment_variables.config_row_id}.csv"
         else:
             out_table_name = f"{out_table_name}.csv"

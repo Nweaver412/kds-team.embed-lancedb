@@ -4,18 +4,11 @@ import os
 import shutil
 import zipfile
 import lancedb
-import asyncio
 import csv
-import dataclasses
 import logging
 from typing import List
 import json
 import os
-
-from io import StringIO
-from itertools import islice
-import pystache as pystache
-import requests.exceptions
 
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType

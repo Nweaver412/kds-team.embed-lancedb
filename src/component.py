@@ -29,23 +29,19 @@ class Component(ComponentBase):
         self.input_table_name = None
 
     def run(self):
-    # Initialize configuration and client
+    # Init configuration and client
         self.init_configuration()
         self.init_client()
-        
         try:
             # Log configuration and get input table
             logging.debug(f"Configuration parameters: {self.configuration.parameters}")
             input_table = self._get_input_table()
             self.input_table_name = os.path.splitext(os.path.basename(input_table.full_path))[0]
             logging.debug(f"Input table name: {self.input_table_name}")
-
             with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
                 reader = csv.DictReader(input_file)
-
-                # Set up output based on chosen format (lance or csv)
                 if self._configuration.outputFormat == 'lance':
-                    # Initialize LanceDB
+                    # InitLanceDB
                     lance_dir = os.path.join(self.tables_out_path, 'lance_db')
                     os.makedirs(lance_dir, exist_ok=True)
                     db = lancedb.connect(lance_dir)
@@ -60,26 +56,23 @@ class Component(ComponentBase):
                     writer = csv.DictWriter(output_file, fieldnames=fieldnames)
                     writer.writeheader()
 
-                # Process rows and generate embeddings
+                # Processing and generate embeddings
                 data = []
                 row_count = 0
                 for row in reader:
                     row_count += 1
                     text = row[self._configuration.embedColumn]
                     embedding = self.get_embedding(text)
-
                     if self._configuration.outputFormat == 'csv':
                         row['embedding'] = embedding
                         writer.writerow(row)
                     else:  # Lance
                         lance_row = {**row, 'embedding': embedding}
                         data.append(lance_row)
-
                     # Batch insert for LanceDB every 1000 rows
                     if self._configuration.outputFormat == 'lance' and row_count % 1000 == 0:
                         table.add(data)
                         data = []
-
                 # Handle any remaining data and finalize output
                 if self._configuration.outputFormat == 'lance' and data:
                     table.add(data)

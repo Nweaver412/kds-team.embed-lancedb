@@ -32,8 +32,10 @@ class Component(ComponentBase):
         self.init_configuration()
         self.init_client()
         try:
+            logging.debug(f"Configuration parameters: {self.configuration.parameters}")
             input_table = self._get_input_table()
             self.input_table_name = os.path.splitext(os.path.basename(input_table.full_path))[0]
+            logging.debug(f"Input table name: {self.input_table_name}")
 
             with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
                 reader = csv.DictReader(input_file)
@@ -46,6 +48,7 @@ class Component(ComponentBase):
                     table = db.create_table("embeddings", schema=schema, mode="overwrite")
                 elif self._configuration.outputFormat == 'csv':
                     output_table = self._get_output_table()
+                    logging.debug(f"Output table full path: {output_table.full_path}")
                     output_file = open(output_table.full_path, 'w', encoding='utf-8', newline='')
                     fieldnames = reader.fieldnames + ['embedding']
                     writer = csv.DictWriter(output_file, fieldnames=fieldnames)
@@ -82,9 +85,11 @@ class Component(ComponentBase):
             raise UserException(f"Error occurred during embedding process: {str(e)}")
         
     def init_configuration(self):
+        logging.debug("Initializing configuration")
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
-
+        logging.debug(f"Loaded configuration: {self._configuration}")
+        
     def init_client(self):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
 
@@ -103,8 +108,18 @@ class Component(ComponentBase):
         return self.get_input_tables_definitions()[0]
     
     def _get_output_table(self):
-        output_file_name = f"embed-lancedb-{self.input_table_name}.csv"
-        return self.create_out_table_definition(output_file_name)
+        try:
+            destination_config = self.configuration.parameters.get('destination', {})
+            out_table_name = destination_config.get("output_table_name")
+            if not out_table_name:
+                out_table_name = f"embed-lancedb-{self.input_table_name}"
+            out_table_name = f"{out_table_name}.csv"
+            table_def = self.create_out_table_definition(out_table_name)
+            logging.debug(f"Created output table definition: {out_table_name}")
+            return table_def
+        except Exception as e:
+            logging.error(f"Failed to create output table definition: {str(e)}")
+            raise UserException(f"Error creating output table: {str(e)}")
     
     def _get_lance_schema(self, fieldnames):
         schema = pa.schema([
@@ -176,6 +191,7 @@ class Component(ComponentBase):
             raise
         
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
     try:
         comp = Component()
         comp.execute_action()

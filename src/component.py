@@ -19,6 +19,10 @@ from kbcstorage.client import Client
 
 from configuration import Configuration
 from openai import OpenAI
+
+KEY_API_TOKEN = '#api_token'
+KEY_DESTINATION = 'destination'
+
 class Component(ComponentBase):
     def __init__(self):
         super().__init__()
@@ -125,6 +129,15 @@ class Component(ComponentBase):
             raise UserException(f"Cannot fetch list of columns for table {table_id}")
         return columns
     
+    def _build_out_table(self) -> TableDefinition:
+        destination_config = self.configuration.parameters['destination']
+
+        if not (out_table_name := destination_config.get("output_table_name")):
+            out_table_name = f"embed-lancedb-{self.environment_variables.config_row_id}.csv"
+        else:
+            out_table_name = f"{out_table_name}.csv"
+        return self.create_out_table_definition(out_table_name, columns=[])
+    
     @sync_action('listColumns')
     def list_columns(self):
         """
@@ -138,7 +151,13 @@ class Component(ComponentBase):
     def _finalize_lance_output(self, lance_dir):
         print("Zipping the Lance directory")
         try:
-            zip_file_name = f"embed-lancedb-{self.input_table_name}.zip"
+            destination_config = self.configuration.parameters['destination']
+            
+            if not (out_table_name := destination_config.get("output_table_name")):
+                zip_file_name = f"embed-lancedb-{self.environment_variables.config_row_id}.zip"
+            else:
+                zip_file_name = f"{out_table_name}.zip"
+
             zip_path = os.path.join(self.files_out_path, zip_file_name)
 
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -152,9 +171,12 @@ class Component(ComponentBase):
 
             # Remove the original Lance directory
             shutil.rmtree(lance_dir)
+            print(f"Removed original Lance directory: {lance_dir}")
+
         except Exception as e:
-            print(f"Error zipping Lance directory: {e}")
+            print(f"Error in _finalize_lance_output: {e}")
             raise
+        
 if __name__ == "__main__":
     try:
         comp = Component()

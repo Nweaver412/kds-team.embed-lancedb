@@ -49,7 +49,7 @@ class Component(ComponentBase):
                     table = db.create_table("embeddings", schema=schema, mode="overwrite")
                 elif self._configuration.outputFormat == 'csv':
                     # Set up CSV output
-                    output_table = self._get_output_table()
+                    output_table = self._build_out_table()
                     logging.debug(f"Output table full path: {output_table.full_path}")
                     output_file = open(output_table.full_path, 'w', encoding='utf-8', newline='')
                     fieldnames = reader.fieldnames + ['embedding']
@@ -178,6 +178,9 @@ class Component(ComponentBase):
 
         return self.create_out_table_definition(out_table_name)
     
+    # def _get_output_table(self):
+    #     return self.create_out_table_definition('embeddings.csv')
+
     @sync_action('listColumns')
     def list_columns(self):
         """

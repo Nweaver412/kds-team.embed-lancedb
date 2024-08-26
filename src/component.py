@@ -122,25 +122,25 @@ class Component(ComponentBase):
             else "https://connection.keboola.com"
     
     def _get_storage_token(self) -> str:
-        return self.configuration.parameters.get('#storage_token') or self.environment_variables.token
+        return self.environment_variables.token
     
-    def _get_output_table(self):
-        """
-        Returns:
-            table from destination configuration, returns defined table
-        """
-        try:
-            destination_config = self._configuration.destination
-            out_table_name = destination_config.output_table_name
-            if not out_table_name:
-                out_table_name = f"embed-lancedb-{self.input_table_name}"
-            out_table_name = f"{out_table_name}.csv"
-            table_def = self.create_out_table_definition(out_table_name)
-            logging.debug(f"Created output table definition: {out_table_name}")
-            return table_def
-        except Exception as e:
-            logging.error(f"Failed to create output table definition: {str(e)}")
-            raise UserException(f"Error creating output table: {str(e)}")
+    # def _get_output_table(self):
+    #     """
+    #     Returns:
+    #         table from destination configuration, returns defined table
+    #     """
+    #     try:
+    #         destination_config = self._configuration.destination
+    #         out_table_name = destination_config.output_table_name
+    #         if not out_table_name:
+    #             out_table_name = f"embed-lancedb-{self.input_table_name}"
+    #         out_table_name = f"{out_table_name}.csv"
+    #         table_def = self.create_out_table_definition(out_table_name)
+    #         logging.debug(f"Created output table definition: {out_table_name}")
+    #         return table_def
+    #     except Exception as e:
+    #         logging.error(f"Failed to create output table definition: {str(e)}")
+    #         raise UserException(f"Error creating output table: {str(e)}")
     
     def _get_lance_schema(self, fieldnames):
         """

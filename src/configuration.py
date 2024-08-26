@@ -50,15 +50,4 @@ class Configuration(ConfigurationBase):
             "ada_002": "text-embedding-ada-002"
         }
         self.model = model_mapping.get(self.model, self.model)
-
-        # Convert destination dict to Destination object if it's a dict
-        if isinstance(self.destination, dict):
-            self.destination = Destination(**self.destination)
-            
-    @classmethod
-    def load_from_dict(cls, configuration: dict):
-        # Handle nested destination object
-        if 'destination' in configuration and isinstance(configuration['destination'], dict):
-            configuration['destination'] = Destination(**configuration['destination'])
-        
-        return super().load_from_dict(configuration)
+    

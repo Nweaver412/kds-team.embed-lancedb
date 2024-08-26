@@ -1,13 +1,22 @@
 import csv
 import logging
 import os
+import apiary
 import shutil
 import zipfile
 import lancedb
 import pyarrow as pa
 import pandas as pd
-from keboola.component.base import ComponentBase
+import asyncio
+import logging
+
+from keboola.component.base import ComponentBase, sync_action
+from keboola.component.sync_actions import ValidationResult, MessageType
+from keboola.component.dao import TableDefinition
 from keboola.component.exceptions import UserException
+from kbcstorage.tables import Tables
+from kbcstorage.client import Client
+
 from configuration import Configuration
 from openai import OpenAI
 class Component(ComponentBase):
@@ -101,6 +110,31 @@ class Component(ComponentBase):
         ] + [('embedding', pa.list_(pa.float32()))])
         return schema
     
+    def _get_storage_source(self) -> str:
+        storage_config = self.configuration.config_data.get("storage")
+        if not storage_config.get("input", {}).get("tables"):
+            raise UserException("Input table must be specified.")
+        source = storage_config["input"]["tables"][0]["source"]
+        return source
+    
+    def _get_table_columns(self, table_id: str) -> list:
+        client = Client(self._get_kbc_root_url(), self._get_storage_token())
+        table_detail = client.tables.detail(table_id)
+        columns = table_detail.get("columns")
+        if not columns:
+            raise UserException(f"Cannot fetch list of columns for table {table_id}")
+        return columns
+    
+    @sync_action('listColumns')
+    def list_columns(self):
+        """
+        Sync action to fill the UI element for column selection.
+        """
+        self.init_configuration()
+        table_id = self._get_storage_source()
+        columns = self._get_table_columns(table_id)
+        return [{"value": c, "label": c} for c in columns]
+
     def _finalize_lance_output(self, lance_dir):
         print("Zipping the Lance directory")
         try:

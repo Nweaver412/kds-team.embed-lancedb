@@ -1,13 +1,11 @@
 import csv
 import logging
 import os
-import apiary
 import shutil
 import zipfile
 import lancedb
 import pyarrow as pa
 import pandas as pd
-import asyncio
 import logging
 
 from keboola.component.base import ComponentBase, sync_action

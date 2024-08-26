@@ -109,8 +109,8 @@ class Component(ComponentBase):
     
     def _get_output_table(self):
         try:
-            destination_config = self.configuration.parameters.get('destination', {})
-            out_table_name = destination_config.get("output_table_name")
+            destination_config = self._configuration.destination
+            out_table_name = destination_config.output_table_name
             if not out_table_name:
                 out_table_name = f"embed-lancedb-{self.input_table_name}"
             out_table_name = f"{out_table_name}.csv"

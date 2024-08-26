@@ -31,11 +31,16 @@ class ConfigurationBase:
                 and f.default_factory == dataclasses.MISSING]
 
 @dataclass
+class Destination(ConfigurationBase):
+    output_table_name: str
+
+@dataclass
 class Configuration(ConfigurationBase):
     embedColumn: str
     pswd_apiKey: str
     model: str
     outputFormat: str
+    destination: Destination
 
     def __post_init__(self):
         # Map the enum values to their corresponding model names
@@ -45,3 +50,15 @@ class Configuration(ConfigurationBase):
             "ada_002": "text-embedding-ada-002"
         }
         self.model = model_mapping.get(self.model, self.model)
+
+        # Convert destination dict to Destination object if it's a dict
+        if isinstance(self.destination, dict):
+            self.destination = Destination(**self.destination)
+            
+    @classmethod
+    def load_from_dict(cls, configuration: dict):
+        # Handle nested destination object
+        if 'destination' in configuration and isinstance(configuration['destination'], dict):
+            configuration['destination'] = Destination(**configuration['destination'])
+        
+        return super().load_from_dict(configuration)

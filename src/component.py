@@ -47,7 +47,7 @@ class Component(ComponentBase):
                     db = lancedb.connect(lance_dir)
                     schema = self._get_lance_schema(reader.fieldnames)
                     table = db.create_table("embeddings", schema=schema, mode="overwrite")
-                    
+
                 elif self._configuration.outputFormat == 'csv':
                     # Set up CSV output
                     output_table = self._build_out_table(input_table)
@@ -179,7 +179,9 @@ class Component(ComponentBase):
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = f"embed-lanceDB-{self.environment_variables.config_row_id}"
+            out_table_name = f"embed-lanceDB-{self.environment_variables.config_row_id}.csv"
+        else:
+            out_table_name = f"{out_table_name}.csv"
 
         logging.debug(f"Destination config: {destination_config}")
         logging.debug(f"Output table name: {out_table_name}")

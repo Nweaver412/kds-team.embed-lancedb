@@ -47,9 +47,10 @@ class Component(ComponentBase):
                     db = lancedb.connect(lance_dir)
                     schema = self._get_lance_schema(reader.fieldnames)
                     table = db.create_table("embeddings", schema=schema, mode="overwrite")
+                    
                 elif self._configuration.outputFormat == 'csv':
                     # Set up CSV output
-                    output_table = self._build_out_table()
+                    output_table = self._build_out_table(input_table)
                     logging.debug(f"Output table full path: {output_table.full_path}")
                     output_file = open(output_table.full_path, 'w', encoding='utf-8', newline='')
                     fieldnames = reader.fieldnames + ['embedding']

@@ -142,14 +142,16 @@ class Component(ComponentBase):
             raise UserException(f"Cannot fetch list of columns for table {table_id}")
         return columns
     
-    def _build_out_table(self) -> TableDefinition:
+    def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = f"embed-lancedb-{self.environment_variables.config_row_id}.csv"
-        else:
-            out_table_name = f"{out_table_name}.csv"
-        return self.create_out_table_definition(out_table_name, columns=[])
+            out_table_name = f"embed-lanceDB-{self.environment_variables.config_row_id}"
+
+        logging.debug(f"Destination config: {destination_config}")
+        logging.debug(f"Output table name: {out_table_name}")
+
+        return self.create_out_table_definition(out_table_name)
     
     @sync_action('listColumns')
     def list_columns(self):

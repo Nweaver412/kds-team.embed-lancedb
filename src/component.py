@@ -116,6 +116,13 @@ class Component(ComponentBase):
             raise UserException("Only one input table is supported")
         return self.get_input_tables_definitions()[0]
     
+    def _get_kbc_root_url(self) -> str:
+        return f'https://{self.environment_variables.stack_id}' if self.environment_variables.stack_id \
+            else "https://connection.keboola.com"
+    
+    def _get_storage_token(self) -> str:
+        return self.configuration.parameters.get('#storage_token') or self.environment_variables.token
+    
     def _get_output_table(self):
         """
         Returns:

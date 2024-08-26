@@ -43,7 +43,6 @@ class Configuration(ConfigurationBase):
     destination: Destination
 
     def __post_init__(self):
-        # Map the enum values to their corresponding model names
         model_mapping = {
             "small_03": "text-embedding-3-small",
             "large_03": "text-embedding-3-large",

@@ -29,9 +29,12 @@ class Component(ComponentBase):
         self.input_table_name = None
 
     def run(self):
+    # Initialize configuration and client
         self.init_configuration()
         self.init_client()
+        
         try:
+            # Log configuration and get input table
             logging.debug(f"Configuration parameters: {self.configuration.parameters}")
             input_table = self._get_input_table()
             self.input_table_name = os.path.splitext(os.path.basename(input_table.full_path))[0]
@@ -40,13 +43,16 @@ class Component(ComponentBase):
             with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
                 reader = csv.DictReader(input_file)
 
+                # Set up output based on chosen format (lance or csv)
                 if self._configuration.outputFormat == 'lance':
+                    # Initialize LanceDB
                     lance_dir = os.path.join(self.tables_out_path, 'lance_db')
                     os.makedirs(lance_dir, exist_ok=True)
                     db = lancedb.connect(lance_dir)
                     schema = self._get_lance_schema(reader.fieldnames)
                     table = db.create_table("embeddings", schema=schema, mode="overwrite")
                 elif self._configuration.outputFormat == 'csv':
+                    # Set up CSV output
                     output_table = self._get_output_table()
                     logging.debug(f"Output table full path: {output_table.full_path}")
                     output_file = open(output_table.full_path, 'w', encoding='utf-8', newline='')
@@ -54,6 +60,7 @@ class Component(ComponentBase):
                     writer = csv.DictWriter(output_file, fieldnames=fieldnames)
                     writer.writeheader()
 
+                # Process rows and generate embeddings
                 data = []
                 row_count = 0
                 for row in reader:
@@ -68,10 +75,12 @@ class Component(ComponentBase):
                         lance_row = {**row, 'embedding': embedding}
                         data.append(lance_row)
 
+                    # Batch insert for LanceDB every 1000 rows
                     if self._configuration.outputFormat == 'lance' and row_count % 1000 == 0:
                         table.add(data)
                         data = []
 
+                # Handle any remaining data and finalize output
                 if self._configuration.outputFormat == 'lance' and data:
                     table.add(data)
                 if self._configuration.outputFormat == 'csv':
@@ -94,6 +103,9 @@ class Component(ComponentBase):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
 
     def get_embedding(self, text):
+        """
+        Gets embedding using set config model
+        """
         try:
             response = self.client.embeddings.create(input=[text], model=self._configuration.model)
             return response.data[0].embedding
@@ -101,6 +113,10 @@ class Component(ComponentBase):
             raise UserException(f"Error getting embedding: {str(e)}")
         
     def _get_input_table(self):
+        """
+        Returns:
+            input table using get input tables definitions, handles errors if too many tables provided
+        """
         if not self.get_input_tables_definitions():
             raise UserException("No input table specified. Please provide one input table in the input mapping!")
         if len(self.get_input_tables_definitions()) > 1:
@@ -108,6 +124,10 @@ class Component(ComponentBase):
         return self.get_input_tables_definitions()[0]
     
     def _get_output_table(self):
+        """
+        Returns:
+            table from destination configuration, returns defined table
+        """
         try:
             destination_config = self._configuration.destination
             out_table_name = destination_config.output_table_name
@@ -122,12 +142,18 @@ class Component(ComponentBase):
             raise UserException(f"Error creating output table: {str(e)}")
     
     def _get_lance_schema(self, fieldnames):
+        """
+        Creates pyarrow schema for lance output
+        """
         schema = pa.schema([
             (name, pa.string()) for name in fieldnames
         ] + [('embedding', pa.list_(pa.float32()))])
         return schema
     
     def _get_storage_source(self) -> str:
+        """
+        Fetches the source input table from the storage config
+        """
         storage_config = self.configuration.config_data.get("storage")
         if not storage_config.get("input", {}).get("tables"):
             raise UserException("Input table must be specified.")
@@ -135,6 +161,9 @@ class Component(ComponentBase):
         return source
     
     def _get_table_columns(self, table_id: str) -> list:
+        """
+        Fetches list of columns for the specified table 
+        """
         client = Client(self._get_kbc_root_url(), self._get_storage_token())
         table_detail = client.tables.detail(table_id)
         columns = table_detail.get("columns")
@@ -143,6 +172,9 @@ class Component(ComponentBase):
         return columns
     
     def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
+        """
+        Builds output table definition based on the input table.
+        """
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
@@ -184,7 +216,7 @@ class Component(ComponentBase):
 
             print(f"Successfully zipped Lance directory to {zip_path}")
 
-            # Remove the original Lance directory
+            # Remove the original Lance file
             shutil.rmtree(lance_dir)
             print(f"Removed original Lance directory: {lance_dir}")
 

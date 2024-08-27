@@ -117,13 +117,6 @@ class Component(ComponentBase):
             raise UserException("Only one input table is supported")
         return self.get_input_tables_definitions()[0]
     
-    def _get_kbc_root_url(self) -> str:
-        return f'https://{self.environment_variables.stack_id}' if self.environment_variables.stack_id \
-            else "https://connection.keboola.com"
-    
-    def _get_storage_token(self) -> str:
-        return self.environment_variables.token
-    
     # def _get_output_table(self):
     #     """
     #     Returns:
@@ -193,12 +186,13 @@ class Component(ComponentBase):
 
     @sync_action('listColumns')
     def list_columns(self):
-        """
-        Sync action to fill the UI element for column selection.
-        """
         self.init_configuration()
-        table_id = self._get_storage_source()
-        columns = self._get_table_columns(table_id)
+        table_id = self.configuration.parameters.get('_metadata_', {}).get('table', {}).get('id')
+        if not table_id:
+            raise UserException("Table ID not found in the configuration")
+        columns = self.configuration.parameters.get('_metadata_', {}).get('table', {}).get('columns', [])
+        if not columns:
+            raise UserException(f"Cannot fetch list of columns for table {table_id}")
         return [{"value": c, "label": c} for c in columns]
 
     def _finalize_lance_output(self, lance_dir):

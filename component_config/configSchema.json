@@ -5,8 +5,7 @@
     "embedColumn",
     "#apiKey",
     "model",
-    "outputFormat",
-    "destination"
+    "outputFormat"
   ],
   "properties": {
     "_metadata_": {
@@ -79,21 +78,6 @@
       },
       "description": "Choose the output format for the embeddings",
       "propertyOrder": 5
-    },
-    "destination": {
-      "title": "Destination",
-      "type": "object",
-      "required": [
-        "output_table_name"
-      ],
-      "properties": {
-        "output_table_name": {
-          "type": "string",
-          "title": "Storage Name",
-          "description": "Name of the table or file stored in Storage.",
-          "propertyOrder": 2
-        }
-      }
     }
   }
 }

@@ -9,6 +9,21 @@
     "destination"
   ],
   "properties": {
+    "_metadata_": {
+      "type": "object",
+      "options": { "hidden": true },
+      "properties": {
+        "table": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "columns": { "type": "array" },
+            "primaryKey": { "type": "array" }
+          }
+        }
+      }
+    },
     "model": {
       "enum": [
         "small_03",
@@ -42,7 +57,11 @@
       "default": "",
       "minLength": 1,
       "description": "Column to be embedded by chosen function",
-      "propertyOrder": 1
+      "propertyOrder": 1,
+      "watch": {
+        "columns": "_metadata_.table.columns"
+      },
+      "enumSource": "columns"
     },
     "outputFormat": {
       "enum": [

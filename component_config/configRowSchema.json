@@ -1,16 +1,4 @@
 {
-    "embedColumn": {
-      "type": "string",
-      "title": "Column to Embed",
-      "default": "",
-      "minLength": 1,
-      "description": "Column to be embedded by chosen function",
-      "propertyOrder": 1,
-      "watch": {
-        "columns": "_metadata_.table.columns"
-      },
-      "enumSource": "columns"
-    },
     "_metadata_": {
       "type": "object",
       "options": { "hidden": true },
@@ -25,5 +13,31 @@
           }
         }
       }
+    },
+    "watch": {
+      "columns": "_metadata_.table.columns"
+    },
+    "enumSource": "columns",
+    "availColumns": {
+      "type": "object",
+      "title": "Available Columns",
+      "format": "grid",
+      "description": "Columns in input table",
+      "required": [
+        "embedColumn"
+    ],
+      "properties": {
+        "embedColumn": {
+          "type": "string",
+          "title": "Available column names",
+          "watch": {
+            "columns": "_metadata_.table.columns"
+          },
+          "enumSource": "columns",
+          "required": true,
+          "propertyOrder": 1
+        }
+      },
+      "propertyOrder": 3
     }
   }

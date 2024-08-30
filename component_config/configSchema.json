@@ -8,21 +8,6 @@
     "outputFormat"
   ],
   "properties": {
-    "_metadata_": {
-      "type": "object",
-      "options": { "hidden": true },
-      "properties": {
-        "table": {
-          "type": "object",
-          "properties": {
-            "id": { "type": "string" },
-            "name": { "type": "string" },
-            "columns": { "type": "array" },
-            "primaryKey": { "type": "array" }
-          }
-        }
-      }
-    },
     "model": {
       "enum": [
         "small_03",
@@ -39,7 +24,7 @@
           "text-embedding-ada-002"
         ]
       },
-      "propertyOrder": 4
+      "propertyOrder": 2
     },
     "#apiKey": {
       "type": "string",
@@ -48,19 +33,7 @@
       "default": "",
       "minLength": 1,
       "description": "API Key for embedding model",
-      "propertyOrder": 3
-    },
-    "embedColumn": {
-      "type": "string",
-      "title": "Column to Embed",
-      "default": "",
-      "minLength": 1,
-      "description": "Column to be embedded by chosen function",
-      "propertyOrder": 1,
-      "watch": {
-        "columns": "_metadata_.table.columns"
-      },
-      "enumSource": "columns"
+      "propertyOrder": 1
     },
     "outputFormat": {
       "enum": [
@@ -77,7 +50,7 @@
         ]
       },
       "description": "Choose the output format for the embeddings",
-      "propertyOrder": 5
+      "propertyOrder": 3
     }
   }
 }

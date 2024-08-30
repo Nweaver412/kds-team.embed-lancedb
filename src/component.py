@@ -144,45 +144,56 @@ class Component(ComponentBase):
         ] + [('embedding', pa.list_(pa.float32()))])
         return schema
     
-    def _get_storage_source(self) -> str:
-        """
-        Fetches the source input table from the storage config
-        """
-        storage_config = self.configuration.config_data.get("storage")
-        if not storage_config.get("input", {}).get("tables"):
-            raise UserException("Input table must be specified.")
-        source = storage_config["input"]["tables"][0]["source"]
-        return source
+    # def _get_storage_source(self) -> str:
+    #     """
+    #     Fetches the source input table from the storage config
+    #     """
+    #     storage_config = self.configuration.config_data.get("storage")
+    #     if not storage_config.get("input", {}).get("tables"):
+    #         raise UserException("Input table must be specified.")
+    #     source = storage_config["input"]["tables"][0]["source"]
+    #     return source
     
-    def _get_table_columns(self, table_id: str) -> list:
-        """
-        Fetches list of columns for the specified table 
-        """
-        client = Client(self._get_kbc_root_url(), self._get_storage_token())
-        table_detail = client.tables.detail(table_id)
-        columns = table_detail.get("columns")
-        if not columns:
-            raise UserException(f"Cannot fetch list of columns for table {table_id}")
-        return columns
+    # def _get_table_columns(self, table_id: str) -> list:
+    #     """
+    #     Fetches list of columns for the specified table 
+    #     """
+    #     client = Client(self._get_kbc_root_url(), self._get_storage_token())
+    #     table_detail = client.tables.detail(table_id)
+    #     columns = table_detail.get("columns")
+    #     if not columns:
+    #         raise UserException(f"Cannot fetch list of columns for table {table_id}")
+    #     return columns
     
-    def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
-        """
-        Builds output table definition based on the input table.
-        """
-        destination_config = self.configuration.parameters['destination']
+    # def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
+    #     """
+    #     Builds output table definition based on the input table.
+    #     """
+    #     destination_config = self.configuration.parameters['destination']
 
-        if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = f"embed-lanceDB-{self.environment_variables.config_row_id}.csv"
-        else:
+    #     if not (out_table_name := destination_config.get("output_table_name")):
+    #         out_table_name = f"embed-lanceDB-{self.environment_variables.config_row_id}.csv"
+    #     else:
+    #         out_table_name = f"{out_table_name}.csv"
+
+    #     logging.debug(f"Destination config: {destination_config}")
+    #     logging.debug(f"Output table name: {out_table_name}")
+
+    #     return self.create_out_table_definition(out_table_name)
+    
+    def _get_output_table(self):
+        try:
+            destination_config = self._configuration.destination
+            out_table_name = destination_config.output_table_name
+            if not out_table_name:
+                out_table_name = f"embed-lancedb-{self.input_table_name}"
             out_table_name = f"{out_table_name}.csv"
-
-        logging.debug(f"Destination config: {destination_config}")
-        logging.debug(f"Output table name: {out_table_name}")
-
-        return self.create_out_table_definition(out_table_name)
-    
-    # def _get_output_table(self):
-    #     return self.create_out_table_definition('embeddings.csv')
+            table_def = self.create_out_table_definition(out_table_name)
+            logging.debug(f"Created output table definition: {out_table_name}")
+            return table_def
+        except Exception as e:
+            logging.error(f"Failed to create output table definition: {str(e)}")
+            raise UserException(f"Error creating output table: {str(e)}")
 
     @sync_action('listColumns')
     def list_columns(self):
@@ -198,14 +209,7 @@ class Component(ComponentBase):
     def _finalize_lance_output(self, lance_dir):
         print("Zipping the Lance directory")
         try:
-            destination_config = self.configuration.parameters['destination']
-            
-            if not (out_table_name := destination_config.get("output_table_name")):
-                zip_file_name = f"embed-lancedb-{self.environment_variables.config_row_id}.zip"
-            else:
-                zip_file_name = f"{out_table_name}.zip"
-
-            zip_path = os.path.join(self.files_out_path, zip_file_name)
+            zip_path = os.path.join(self.files_out_path, 'embeddings_lance.zip')
 
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for root, dirs, files in os.walk(lance_dir):
@@ -216,12 +220,10 @@ class Component(ComponentBase):
 
             print(f"Successfully zipped Lance directory to {zip_path}")
 
-            # Remove the original Lance file
+            # Remove the original Lance directory
             shutil.rmtree(lance_dir)
-            print(f"Removed original Lance directory: {lance_dir}")
-
         except Exception as e:
-            print(f"Error in _finalize_lance_output: {e}")
+            print(f"Error zipping Lance directory: {e}")
             raise
         
 if __name__ == "__main__":

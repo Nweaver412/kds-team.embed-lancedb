@@ -31,8 +31,11 @@ class ConfigurationBase:
                 and f.default_factory == dataclasses.MISSING]
 
 @dataclass
-class Destination(ConfigurationBase):
-    output_table_name: str
+class OutTableParams:
+    table_name: str
+    destination: str
+    incremental: bool
+    primary_key: list
 
 @dataclass
 class Configuration(ConfigurationBase):
@@ -40,7 +43,7 @@ class Configuration(ConfigurationBase):
     pswd_apiKey: str
     model: str
     outputFormat: str
-    destination: Destination
+    output_table_name: str = "embeddings"  # New field with default value
 
     def __post_init__(self):
         model_mapping = {
@@ -49,4 +52,11 @@ class Configuration(ConfigurationBase):
             "ada_002": "text-embedding-ada-002"
         }
         self.model = model_mapping.get(self.model, self.model)
-    
+
+    @classmethod
+    def load_from_dict(cls, configuration: dict):
+        # Extract output_table_name from nested structure if present
+        if 'destination' in configuration and 'output_table_name' in configuration['destination']:
+            configuration['output_table_name'] = configuration['destination']['output_table_name']
+        
+        return super().load_from_dict(configuration)

@@ -43,7 +43,7 @@ class Configuration(ConfigurationBase):
     pswd_apiKey: str
     model: str
     outputFormat: str
-    output_table_name: str = "embeddings"  # New field with default value
+    output_table_name: str
 
     def __post_init__(self):
         model_mapping = {

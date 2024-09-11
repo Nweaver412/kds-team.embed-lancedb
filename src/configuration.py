@@ -41,7 +41,7 @@ class Configuration(ConfigurationBase):
     embedColumn: str
     pswd_apiKey: str
     model: str
-    outputFormat: str
+    outputFormat: str = "csv"
     destination: Destination
 
 

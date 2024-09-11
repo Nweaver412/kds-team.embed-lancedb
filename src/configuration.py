@@ -55,7 +55,6 @@ class Configuration(ConfigurationBase):
 
     @classmethod
     def load_from_dict(cls, configuration: dict):
-        # Extract output_table_name from nested structure if present
         if 'destination' in configuration and 'output_table_name' in configuration['destination']:
             configuration['output_table_name'] = configuration['destination']['output_table_name']
         

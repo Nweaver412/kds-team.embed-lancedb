@@ -41,9 +41,8 @@ class Configuration(ConfigurationBase):
     embedColumn: str
     pswd_apiKey: str
     model: str
-    outputFormat: str = "csv"
     destination: Destination
-
+    outputFormat: str = "csv"
 
     def __post_init__(self):
         model_mapping = {

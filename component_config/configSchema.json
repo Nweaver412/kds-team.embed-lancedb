@@ -4,8 +4,7 @@
   "required": [
     "embedColumn",
     "#apiKey",
-    "model",
-    "outputFormat"
+    "model"
   ],
   "properties": {
     "model": {

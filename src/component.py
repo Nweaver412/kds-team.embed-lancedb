@@ -82,7 +82,7 @@ class Component(ComponentBase):
             raise UserException("Only one input table is supported")
         return self.get_input_tables_definitions()[0]
     
-    def _get_output_table(self):
+    def _get_output_table(self):        
         destination_config = self.configuration.parameters['destination']
         if not (out_table_name := destination_config.get("output_table_name")):
             out_table_name = f"app-embed-lancedb.csv"

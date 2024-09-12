@@ -4,15 +4,12 @@ import os
 import shutil
 import zipfile
 import lancedb
-
 import pyarrow as pa
 import pandas as pd
-
 from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
 from configuration import Configuration
 from openai import OpenAI
-
 class Component(ComponentBase):
     def __init__(self):
         super().__init__()
@@ -86,8 +83,7 @@ class Component(ComponentBase):
         return self.get_input_tables_definitions()[0]
     
     def _get_output_table(self):
-        out_table_name = f"embed.csv"
-        return self.create_out_table_definition(out_table_name)
+        return self.create_out_table_definition('embeddings.csv')
     
     def _get_lance_schema(self, fieldnames):
         schema = pa.schema([
@@ -106,11 +102,12 @@ class Component(ComponentBase):
                         arcname = os.path.relpath(file_path, lance_dir)
                         zipf.write(file_path, arcname)
             print(f"Successfully zipped Lance directory to {zip_path}")
+            # Remove the original Lance directory
             shutil.rmtree(lance_dir)
         except Exception as e:
             print(f"Error zipping Lance directory: {e}")
             raise
-
+        
 if __name__ == "__main__":
     try:
         comp = Component()

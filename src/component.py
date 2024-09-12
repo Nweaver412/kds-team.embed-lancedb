@@ -83,7 +83,13 @@ class Component(ComponentBase):
         return self.get_input_tables_definitions()[0]
     
     def _get_output_table(self):
-        return self.create_out_table_definition('embeddings.csv')
+        destination_config = self.configuration.parameters['destination']
+        if not (out_table_name := destination_config.get("output_table_name")):
+            out_table_name = f"app-embed-lancedb.csv"
+        else:
+            out_table_name = f"{out_table_name}.csv"
+
+        return self.create_out_table_definition(out_table_name)
     
     def _get_lance_schema(self, fieldnames):
         schema = pa.schema([
@@ -107,7 +113,7 @@ class Component(ComponentBase):
         except Exception as e:
             print(f"Error zipping Lance directory: {e}")
             raise
-        
+
 if __name__ == "__main__":
     try:
         comp = Component()

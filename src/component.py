@@ -15,6 +15,7 @@ class Component(ComponentBase):
         super().__init__()
         self._configuration = None
         self.client = None
+
     def run(self):
         self.init_configuration()
         self.init_client()
@@ -59,30 +60,43 @@ class Component(ComponentBase):
             print(f"Output saved in {self._configuration.outputFormat} format")
         except Exception as e:
             raise UserException(f"Error occurred during embedding process: {str(e)}")
+        
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
+
     def init_client(self):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
+
     def get_embedding(self, text):
         try:
             response = self.client.embeddings.create(input=[text], model=self._configuration.model)
             return response.data[0].embedding
         except Exception as e:
             raise UserException(f"Error getting embedding: {str(e)}")
+        
     def _get_input_table(self):
         if not self.get_input_tables_definitions():
             raise UserException("No input table specified. Please provide one input table in the input mapping!")
         if len(self.get_input_tables_definitions()) > 1:
             raise UserException("Only one input table is supported")
         return self.get_input_tables_definitions()[0]
-    def _get_output_table(self):
-        return self.create_out_table_definition('embeddings.csv')
+    
+    def _get_output_table(self):        
+        destination_config = self.configuration.parameters['destination']
+        if not (out_table_name := destination_config.get("output_table_name")):
+            out_table_name = f"app-embed-lancedb.csv"
+        else:
+            out_table_name = f"{out_table_name}.csv"
+
+        return self.create_out_table_definition(out_table_name)
+    
     def _get_lance_schema(self, fieldnames):
         schema = pa.schema([
             (name, pa.string()) for name in fieldnames
         ] + [('embedding', pa.list_(pa.float32()))])
         return schema
+    
     def _finalize_lance_output(self, lance_dir):
         print("Zipping the Lance directory")
         try:
@@ -99,6 +113,7 @@ class Component(ComponentBase):
         except Exception as e:
             print(f"Error zipping Lance directory: {e}")
             raise
+
 if __name__ == "__main__":
     try:
         comp = Component()

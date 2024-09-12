@@ -34,7 +34,7 @@ class ConfigurationBase:
 class Destination(ConfigurationBase):
     incremental_load: bool
     output_table_name: str
-    primary_keys_array: str
+    primary_keys: str
 
 @dataclass
 class Configuration(ConfigurationBase):

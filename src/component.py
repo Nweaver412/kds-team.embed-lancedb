@@ -86,7 +86,7 @@ class Component(ComponentBase):
         return self.get_input_tables_definitions()[0]
     
     def _get_output_table(self):
-        out_table_name = f"{self._configuration.destination.output_table_name}.csv"
+        out_table_name = f"embed.csv"
         return self.create_out_table_definition(out_table_name)
     
     def _get_lance_schema(self, fieldnames):
